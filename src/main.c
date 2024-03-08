@@ -126,7 +126,8 @@ int main(int argc, char* argv[]){
             case 'h': //help messange
                 break;
             case 'u': //user, aka. home
-                mydir = opendir(home);
+                here = home;
+                mydir = opendir(here);
                 break;
             case 'r': //root
                 mydir = opendir("/");
@@ -139,7 +140,6 @@ int main(int argc, char* argv[]){
     }else{
         mydir = opendir(here); //open here
     }
-
     if(mydir == NULL) return -1; //error handler
   
     bool running = true;
@@ -156,20 +156,23 @@ int main(int argc, char* argv[]){
     
     while(running){
         int input = getch();
+        //mvprintw(0, 0, "%x\n", input);
         switch (input) {
-            case 0x20: //space
+            case 0x0a: // enter??
                 /**
                  * return is not working
                  * it should be 0x0d, but the application
                  * does not respond to this input.
                  * need to search more
+                 *
+                 * wtf is 0x0a
                 */
                 if(c.y == 4){
                     here = goparent(mydir, here);
                     namelist = printdir(namelist, here);
                     printcursor(&c, 0);  
                 }else if(c.y > 4){
-                    here = gochild(mydir, here, namelist[3]->d_name);
+                    here = gochild(mydir, here, namelist[c.y-3]->d_name);
                     namelist = printdir(namelist, here);
                     printcursor(&c, 0);  
                 } 
