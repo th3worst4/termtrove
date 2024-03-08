@@ -17,22 +17,26 @@ struct cursor{
 };
 
 char* gochild(DIR* mydir, char* here, char* child, int y, int* success){
+    /**
+     * "a function should do only one task"
+     * bro, this function does more than the entire rest of the program
+    */
     struct stat *newPathStat = malloc(sizeof(struct stat)); 
-    char* newPath = malloc(strlen(here)+strlen(child));
+    char* newPath = malloc(strlen(here)+strlen(child)); //place holder for new path
     
     strcpy(newPath, here);
     strcat(newPath, "/");
-    strcat(newPath, child);
+    strcat(newPath, child); //concat everything under the newPath variable
     
-    stat(newPath, newPathStat);
+    stat(newPath, newPathStat); //uses it to verify if the newPath is a directory or not
 
-    if(S_ISDIR(newPathStat->st_mode)){
+    if(S_ISDIR(newPathStat->st_mode)){ //S_ISDIR is the macro that verifies it
         closedir(mydir);
         mydir = opendir(newPath);
         *success = 1;
-        here = realloc(here, strlen(newPath)+1);
+        here = realloc(here, strlen(newPath)+1); //must realloc on here, 'cause newPath data will be gone as the function exits
         strcpy(here, newPath);
-        return here;
+        return here; //returns the newPath if the path is a directory
     }else{
         mvaddstr(y, 2+strlen(child)+4, "You cannot open non directories");
         refresh();
