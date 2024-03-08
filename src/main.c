@@ -2,7 +2,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <limits.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -10,20 +9,36 @@
 
 #include <ncurses.h>
 
+#define LINE 6
+
 struct cursor{
     unsigned int x;
     unsigned int y;
 };
 
-char* gochild(DIR* mydir, char* here, char* child){
-    closedir(mydir);
-    here = realloc(here, strlen(here)+strlen(child));
-    strcat(here, "/");
-    strcat(here, child);
-
-    mydir = opendir(here);
+char* gochild(DIR* mydir, char* here, char* child, int y, int* success){
+    struct stat *newPathStat = malloc(sizeof(struct stat)); 
+    char* newPath = malloc(strlen(here)+strlen(child));
     
-    return here;
+    strcpy(newPath, here);
+    strcat(newPath, "/");
+    strcat(newPath, child);
+    
+    stat(newPath, newPathStat);
+
+    if(S_ISDIR(newPathStat->st_mode)){
+        closedir(mydir);
+        mydir = opendir(newPath);
+        *success = 1;
+        here = realloc(here, strlen(newPath)+1);
+        strcpy(here, newPath);
+        return here;
+    }else{
+        mvaddstr(y, 2+strlen(child)+4, "You cannot open non directories");
+        refresh();
+        *success = 0;
+        return here; 
+    } 
 }
 
 char* goparent(DIR* mydir, char* here){
@@ -73,7 +88,7 @@ char* findhome(char* home, char* here){
 struct dirent** printdir(struct dirent** namelist, char* here){
     erase();
     refresh();
-    int line = 4;
+    int l = LINE;
     int n;
     
     n = scandir(here, &namelist, NULL, alphasort);
@@ -82,9 +97,10 @@ struct dirent** printdir(struct dirent** namelist, char* here){
     mvprintw(2, 4, "%s\n", here);
     attroff(A_BOLD);
     
+    mvprintw(l-1, 4, "Name");
     for(int i = 1; i < n; i++){
-        mvprintw(line, 4, "%s\n", namelist[i]->d_name); 
-        line++;
+        mvprintw(l, 4, "%s\n", namelist[i]->d_name); 
+        l++;
         refresh();
     }
 
@@ -93,16 +109,18 @@ struct dirent** printdir(struct dirent** namelist, char* here){
 
 void printcursor(struct cursor *c, int dir){
     switch (dir) {
+        case -1:
+            break;
         case 0:
             c->x = 2;
-            c->y = 4;
+            c->y = LINE;
             break;
         case 0x6a: //j
             mvaddch(c->y, c->x, ' '); // clear previous cursor
             c->y++;
             break;
         case 0x6b: //h
-            if(c->y <= 4) return;
+            if(c->y <= LINE) return;
             mvaddch(c->y, c->x, ' ');
             c->y--; // bug to fix
             break;
@@ -149,13 +167,14 @@ int main(int argc, char* argv[]){
     scrollok(stdscr, true);
     noecho();  
 
-    struct cursor c = {.x = 2, .y = 4};
+    struct cursor c = {.x = 2, .y = LINE};
     
     namelist = printdir(namelist, here);
     printcursor(&c, 0);
     
     while(running){
         int input = getch();
+        int success;
         //mvprintw(0, 0, "%x\n", input);
         switch (input) {
             case 0x0a: // enter??
@@ -167,14 +186,18 @@ int main(int argc, char* argv[]){
                  *
                  * wtf is 0x0a
                 */
-                if(c.y == 4){
+                if(c.y == LINE){
                     here = goparent(mydir, here);
                     namelist = printdir(namelist, here);
                     printcursor(&c, 0);  
-                }else if(c.y > 4){
-                    here = gochild(mydir, here, namelist[c.y-3]->d_name);
-                    namelist = printdir(namelist, here);
-                    printcursor(&c, 0);  
+                }else if(c.y > LINE){
+                    here = gochild(mydir, here, namelist[c.y-(LINE-1)]->d_name, c.y, &success);
+                    if(success){ //checks if new path is a folder
+                        namelist = printdir(namelist, here);
+                        printcursor(&c, 0);  
+                    }else{
+                        printcursor(&c, -1); 
+                    }
                 } 
                 break;
             case 0x6a: //j
