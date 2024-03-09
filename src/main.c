@@ -1,137 +1,5 @@
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-
-#include <ncurses.h>
-
-#define LINE 6
-
-struct cursor{
-    unsigned int x;
-    unsigned int y;
-};
-
-char* gochild(DIR* mydir, char* here, char* child, int y, int* success){
-    /**
-     * "a function should do only one task"
-     * bro, this function does more than the entire rest of the program
-    */
-    struct stat *newPathStat = malloc(sizeof(struct stat)); 
-    char* newPath = malloc(strlen(here)+strlen(child)); //place holder for new path
-    
-    strcpy(newPath, here);
-    strcat(newPath, "/");
-    strcat(newPath, child); //concat everything under the newPath variable
-    
-    stat(newPath, newPathStat); //uses it to verify if the newPath is a directory or not
-
-    if(S_ISDIR(newPathStat->st_mode)){ //S_ISDIR is the macro that verifies it
-        closedir(mydir);
-        mydir = opendir(newPath);
-        *success = 1;
-        here = realloc(here, strlen(newPath)+1); //must realloc on here, 'cause newPath data will be gone as the function exits
-        strcpy(here, newPath);
-        return here; //returns the newPath if the path is a directory
-    }else{
-        mvaddstr(y, 2+strlen(child)+4, "You cannot open non directories");
-        refresh();
-        *success = 0;
-        return here; 
-    } 
-}
-
-char* goparent(DIR* mydir, char* here){
-    closedir(mydir);
-    /**
-        * Cannot go futher /home 
-        * Needs  analysis
-    */
-    for(int i = strlen(here)-1; i > 0; i--){
-        if(here[i] == '/'){
-            here[i] = '\0';
-            break;
-        }
-    }
-    here = realloc(here, strlen(here));
-    
-    mydir = opendir(here); //opens on parent
-    
-    return here;
-}
-
-char* findhere(char* here, char* argv0){
-    realpath(argv0, here);
-    for(int i = strlen(here)-1; i > 0; i--){
-        if(here[i] == '/'){
-            here[i] = '\0';
-            break;
-        }
-    }
-    here = realloc(here, strlen(here));
-    return here;
-}
-
-char* findhome(char* home, char* here){
-    strcpy(home, here);
-    for(int i = 6; i < strlen(here); i++){
-        if(home[i] == '/'){
-            home[i] = '\0';
-            break;
-        } 
-    }
-    home = realloc(home, strlen(home));
-
-    return home;
-}
-
-struct dirent** printdir(struct dirent** namelist, char* here){
-    erase();
-    refresh();
-    int l = LINE;
-    int n;
-    
-    n = scandir(here, &namelist, NULL, alphasort);
-    
-    attron(A_BOLD);
-    mvprintw(2, 4, "%s\n", here);
-    attroff(A_BOLD);
-    
-    mvprintw(l-1, 4, "Name");
-    for(int i = 1; i < n; i++){
-        mvprintw(l, 4, "%s\n", namelist[i]->d_name); 
-        l++;
-        refresh();
-    }
-
-    return namelist;
-}
-
-void printcursor(struct cursor *c, int dir){
-    switch (dir) {
-        case -1:
-            break;
-        case 0:
-            c->x = 2;
-            c->y = LINE;
-            break;
-        case 0x6a: //j
-            mvaddch(c->y, c->x, ' '); // clear previous cursor
-            c->y++;
-            break;
-        case 0x6b: //h
-            if(c->y <= LINE) return;
-            mvaddch(c->y, c->x, ' ');
-            c->y--; // bug to fix
-            break;
-    }
-    mvaddch(c->y, c->x, '>');
-    refresh();
-}
+#include "includes.h"
+#include "functions.h"
 
 int main(int argc, char* argv[]){
     char *here = malloc(128*sizeof(char));
@@ -148,11 +16,12 @@ int main(int argc, char* argv[]){
             case 'h': //help messange
                 break;
             case 'u': //user, aka. home
-                here = home;
+                strcpy(here, home);
                 mydir = opendir(here);
                 break;
             case 'r': //root
-                mydir = opendir("/");
+                strcpy(here, "/");
+                mydir = opendir(here);
                 break;
             default:
                 printf("Wrong usage, try -h to help.\n");
@@ -168,7 +37,6 @@ int main(int argc, char* argv[]){
     
     initscr();
     keypad(stdscr, true);
-    scrollok(stdscr, true);
     noecho();  
 
     struct cursor c = {.x = 2, .y = LINE};
@@ -190,8 +58,9 @@ int main(int argc, char* argv[]){
                  *
                  * wtf is 0x0a
                 */
-                if(c.y == LINE){
+                if(c.y == LINE && strcmp(here, "/")){
                     here = goparent(mydir, here);
+                    refresh();
                     namelist = printdir(namelist, here);
                     printcursor(&c, 0);  
                 }else if(c.y > LINE){

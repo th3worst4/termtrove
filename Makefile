@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -m64 -lncurses -lc -g
 
-CFILES = main.c
-OBJECTS = main.o
+CFILES = main.c diroperations.c interface.c
+OBJECTS = main.o diroperations.o interface.o
 BIN = main
 
 $(OBJECTS): %.o: src/%.c
