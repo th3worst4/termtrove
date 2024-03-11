@@ -8,7 +8,6 @@ Be aware this is an ongoing project and many common features on most file explor
 
 * Create directories
 * Rename files/directories
-* Delete files/directories
 * Copy, paste or cut files/directories
 
 ## How to build it?
@@ -40,7 +39,7 @@ This software is under MIT License, for more information check [License][] text 
 
 * 03/09/2024 - goparent and gochild functions modified. Splited code on many source files to be more consistent
 
-* 03/10/2024 - Updated README.md, short description and HowTo build were added.
+* 03/10/2024 - Updated README.md, short description and HowTo build were added. Added delete function.
 
 [License]:/LICENSE
 [Make]: https://www.gnu.org/software/make/manual/make.html
