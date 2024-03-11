@@ -7,6 +7,9 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+#define __USE_XOPEN_EXTENDED
+#include <ftw.h>
+
 #include <ncurses.h>
 
 #define LINE 6

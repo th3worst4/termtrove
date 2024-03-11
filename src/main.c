@@ -79,6 +79,11 @@ int main(int argc, char* argv[]){
             case 0x6b: //k
                 printcursor(&c, 0x6b);
                 break;
+            case 0x64: //d 
+                del(here, namelist[c.y-(LINE-1)]->d_name, c.y);
+                namelist = printdir(namelist, here);
+                printcursor(&c, 0);
+                break;
             case 0x70: //p
                 here = goparent(mydir, here); //get parent folder
                 namelist = printdir(namelist, here);

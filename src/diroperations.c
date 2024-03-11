@@ -1,5 +1,42 @@
 #include "includes.h"
 
+int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf){
+        // credits for this function: https://stackoverflow.com/a/5467788
+        int rv = remove(fpath);
+
+        if (rv)
+                perror(fpath);
+
+        return rv;
+}
+
+int rmrf(char *path){
+        return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
+}
+
+void del(char* here, char* child, int y){
+        char* filePath = malloc(strlen(here)+strlen(child));
+        strcpy(filePath, here);
+        strcat(filePath, child);
+
+        struct stat *fileStat = malloc(sizeof(struct stat));
+        stat(filePath, fileStat);
+
+        if(S_ISDIR(fileStat->st_mode)){
+                mvaddstr(y, 2+strlen(child)+4, "is a directory, are you sure you want to delete it? y/N");
+                int option = getch();
+                if(option == 0x79){
+                       rmrf(filePath); 
+                }else return;
+        }else{
+                mvaddstr(y, 2+strlen(child)+4, "are you sure you want to delete it? y/N");
+                int option = getch();
+                if(option == 0x79){
+                       remove(filePath);
+                }else return;
+        }
+}
+
 char* gochild(DIR* mydir, char* here, char* child, int y, int* success){
     /**
      * "a function should do only one task"
@@ -68,3 +105,5 @@ char* findhome(char* home, char* here){
 
     return home;
 }
+
+

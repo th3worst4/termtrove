@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -m64
-CLIB = -lncurses
+CLIB = -lncurses -lc
 
 CFILES = main.c diroperations.c interface.c
 OBJECTS = main.o diroperations.o interface.o
