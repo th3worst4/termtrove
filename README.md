@@ -34,7 +34,7 @@ A new folder called bin should appear, the compiled binary is under the path:
 
 ## License
 
-This software is under MIT License, for more information check [Licence][] text file.
+This software is under MIT License, for more information check [License][] text file.
 
 ## Update logs
 
@@ -42,5 +42,5 @@ This software is under MIT License, for more information check [Licence][] text 
 
 * 03/10/2024 - Updated README.md, short description and HowTo build were added.
 
-[License]: /LICENSE
+[License]:/LICENSE
 [Make]: https://www.gnu.org/software/make/manual/make.html
